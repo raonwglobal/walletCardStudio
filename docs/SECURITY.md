@@ -7,8 +7,9 @@
 - [x] Handle unavailable or malformed browser storage without crashing.
 - [x] Do not implement Base64 profile links as if they were secure sharing.
 - [x] Clearly mark Wallet and access-control features as not yet connected.
-- [ ] Add automated security tests and dependency scanning in CI.
-- [ ] Decide and document data retention, export and deletion behavior before public launch.
+- [x] Add server-side opaque share tokens, token-hash storage, approved-field allowlisting, expiry, revocation and IP-based rate limiting (backend scaffold; production gates remain).
+- [ ] Add Firebase emulator/integration security tests and dependency/secret scanning in CI.
+- [ ] Connect the frontend authentication/share/revocation flows and complete retention/deletion review before public launch.
 
 ## Personal data
 
@@ -21,9 +22,12 @@
 ## Sharing
 
 - Base64 is an encoding, not encryption or access control.
-- Future public share links must use server-generated high-entropy opaque tokens, scoped access, expiration, revocation and rate limiting.
-- Avoid personal data in URLs, analytics events and application logs.
-- Prevent public share endpoints from exposing fields that the owner did not approve.
+- Public links use server-generated high-entropy opaque tokens; Firestore stores only SHA-256 token hashes.
+- Create/revoke operations require authentication and App Check; public resolution checks expiry/revocation and applies IP-based rate limits.
+- Public responses contain only the explicitly selected fields from a validated profile snapshot.
+- Avoid personal data and raw tokens in logs, analytics and Firestore document values.
+- Configure Firestore TTL for rate-limit records and define retention/deletion procedures before production use.
+- Firebase sharing backend is not yet connected to the frontend; do not claim the product's share UI is live.
 
 ## Google Wallet
 
