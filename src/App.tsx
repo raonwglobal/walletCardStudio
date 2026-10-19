@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import {
-  ArrowDownToLine, ArrowRight, Check, ChevronDown, CircleHelp, Copy,
+  ArrowDownToLine, ArrowRight, Check, CircleHelp, Copy,
   CreditCard, Eye, Filter, Grid2X2, LayoutTemplate, Link2, LockKeyhole,
   Plus, Search, ShieldCheck, Sparkles, WalletCards, X
 } from "lucide-react";
 import type { CardCategory, CardInput, CardRecord } from "./lib/cards";
-import { createCard, loadCards, saveCards, starterCards, toVCard, validateCard } from "./lib/cards";
+import { createCard, loadCards, saveCards, toVCard, validateCard } from "./lib/cards";
 import { createQrDataUrl } from "./lib/qr";
 
 type Tab = "gallery" | "studio";
@@ -66,12 +66,15 @@ function App() {
 
   useEffect(() => {
     let cancelled = false;
-    if (activeCard && showQr) {
-      createQrDataUrl(toVCard(activeCard)).then(url => { if (!cancelled) setQrUrl(url); })
+    if (showQr) {
+      const qrCard: CardRecord = {
+        ...draft, id: editingId ?? "draft", createdAt: "", updatedAt: ""
+      };
+      createQrDataUrl(toVCard(qrCard)).then(url => { if (!cancelled) setQrUrl(url); })
         .catch(() => { if (!cancelled) setNotice("QR 코드를 생성하지 못했습니다."); });
     }
     return () => { cancelled = true; };
-  }, [activeCard, showQr]);
+  }, [draft, editingId, showQr]);
 
   function startNew() {
     setDraft(blankInput);
@@ -83,8 +86,12 @@ function App() {
   }
 
   function editCard(card: CardRecord) {
-    const { id: _id, createdAt: _created, updatedAt: _updated, ...input } = card;
-    setDraft(input);
+    const input: CardInput = {
+    name: card.name, role: card.role, company: card.company, email: card.email,
+    phone: card.phone, website: card.website, location: card.location, bio: card.bio,
+    category: card.category, theme: card.theme
+  };
+  setDraft(input);
     setEditingId(card.id);
     setErrors([]);
     setTab("studio");
