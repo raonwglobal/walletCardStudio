@@ -8,20 +8,31 @@
 - `src/styles.css`: responsive styling and accessible focus states.
 - Browser storage is a prototype persistence layer, not a cloud backup or security boundary.
 
-## Domain model direction
+## Domain model
 
 - `CardDesign`: layout, colors, typography and template configuration; no identity fields.
 - `PublicCardProfile`: explicitly approved fields safe for public display.
 - `CardRecord`: owner, profile reference, design, timestamps and lifecycle status.
-- `ShareRecord`: server-side opaque token hash, card reference, scope, expiration and revocation status.
+- `ShareRecord`: server-side opaque token hash, approved field snapshot, owner, expiration and revocation state.
 
 Keep design configuration separate from personal profile data so that templates can be reused without copying PII.
+
+## Firebase backend
+
+- `functions/src/index.ts`: callable create, resolve and revoke share endpoints.
+- `functions/src/sharing.ts`: 256-bit opaque token generation, SHA-256 hashing, field allowlist and input validation.
+- `publicShares/{sha256(token)}`: stores only the token hash as document ID, owner UID, approved profile snapshot, selected fields, expiry, revocation state and schema version.
+- `shareRateLimits/{hash(ip + minute)}`: short-lived counters used to throttle public resolution.
+- Firestore rules deny direct client access; trusted Cloud Functions use the Admin SDK.
+- Authenticated creation/revocation requires Firebase Authentication and App Check. Public resolution receives the token in the callable body.
+
+The Firebase service is backend-only until the UI authentication, field selection, share page, revoke flow, emulator tests and deployment are complete. Do not label public sharing as live before those gates pass.
 
 ## Future backend boundaries
 
 1. Authentication and authorization.
 2. Card/profile API with ownership checks and tenant isolation.
-3. Share-token service that generates high-entropy opaque tokens; store token hashes, enforce scope/expiry/revocation, and rate-limit resolution.
+3. Share-token service with scoped access, expiration, revocation and rate limiting.
 4. Google Wallet issuer service; signing keys remain server-side.
 5. Organization administration, audit events and billing.
 6. Optional access validation service, isolated from public profile endpoints.
