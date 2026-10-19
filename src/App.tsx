@@ -9,8 +9,6 @@ import { createCard, loadCards, saveCards, toVCard, validateCard } from "./lib/c
 import { createQrDataUrl } from "./lib/qr";
 import SharePanel from "./components/SharePanel";
 import PublicSharePage from "./components/PublicSharePage";
-import SharePanel from "./components/SharePanel";
-import PublicSharePage from "./components/PublicSharePage";
 
 type Tab = "gallery" | "studio";
 type FilterValue = "all" | CardCategory;
@@ -236,11 +234,6 @@ function CardStudioApp() {
       <div className="mobile-bottom-nav"><button onClick={() => setTab("gallery")} className={tab === "gallery" ? "active" : ""}><LayoutTemplate size={18} />광장</button><button onClick={startNew}><Plus size={18} />만들기</button><button onClick={() => activeCard && editCard(activeCard)}><CreditCard size={18} />내 명함</button></div>
     </div>
   );
-}
-
-function CardStudioApp() {
-  const shareToken = new URLSearchParams(window.location.hash.slice(1)).get("share");
-  return shareToken ? <PublicSharePage token={shareToken} /> : <CardStudioApp />;
 }
 
 function App() {
