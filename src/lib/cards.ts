@@ -92,7 +92,11 @@ export function saveCards(cards: CardRecord[]): boolean {
 }
 
 function escapeVCard(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/,/g, "\\,").replace(/;/g, "\\;");
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/\r\n|\r|\n/g, "\\n")
+    .replace(/,/g, "\\,")
+    .replace(/;/g, "\\;");
 }
 
 export function toVCard(card: CardRecord): string {
