@@ -28,11 +28,15 @@ export function getFirebaseServices() {
 
   const app = getApps().length ? getApp() : initializeApp(config);
   if (appCheckSiteKey && !appCheckInitialized) {
-    initializeAppCheck(app, {
-      provider: new ReCaptchaV3Provider(appCheckSiteKey),
-      isTokenAutoRefreshEnabled: true,
-    });
-    appCheckInitialized = true;
+    try {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider(appCheckSiteKey),
+        isTokenAutoRefreshEnabled: true,
+      });
+      appCheckInitialized = true;
+    } catch {
+      // Callable errors are surfaced in the UI if App Check cannot initialize.
+    }
   }
 
   return {
