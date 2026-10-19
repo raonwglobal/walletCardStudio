@@ -22,6 +22,13 @@ function getToken(value: unknown): string {
   return value;
 }
 
+function getShareId(value: unknown): string {
+  if (typeof value !== "string" || !/^[a-f0-9]{64}$/.test(value)) {
+    throw new HttpsError("invalid-argument", "The share identifier is invalid.");
+  }
+  return value;
+}
+
 async function enforceResolveRateLimit(ip: string): Promise<void> {
   const minuteBucket = Math.floor(Date.now() / 60_000);
   const rateKey = hashToken(`${ip}:${minuteBucket}`);
@@ -67,7 +74,29 @@ export const createShare = onCall({ enforceAppCheck: true }, async request => {
   });
 
   // Return the raw token only once. It is never persisted in Firestore or logged.
-  return { token, expiresAt: expiresAt.toDate().toISOString() };
+  return { token, shareId: tokenHash, expiresAt: expiresAt.toDate().toISOString() };
+});
+
+export const listMyShares = onCall({ enforceAppCheck: true }, async request => {
+  const ownerUid = requireUser(request.auth?.uid);
+  const snapshot = await db.collection("publicShares")
+    .where("ownerUid", "==", ownerUid)
+    .limit(50)
+    .get();
+
+  const shares = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      shareId: doc.id,
+      fields: Array.isArray(data.fields) ? data.fields : [],
+      createdAt: data.createdAt instanceof Timestamp ? data.createdAt.toDate().toISOString() : null,
+      expiresAt: data.expiresAt instanceof Timestamp ? data.expiresAt.toDate().toISOString() : null,
+      revoked: Boolean(data.revokedAt),
+      expired: !(data.expiresAt instanceof Timestamp) || data.expiresAt.toMillis() <= Date.now(),
+    };
+  });
+  shares.sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""));
+  return { shares };
 });
 
 export const resolveShare = onCall(async request => {
@@ -92,8 +121,8 @@ export const resolveShare = onCall(async request => {
 
 export const revokeShare = onCall({ enforceAppCheck: true }, async request => {
   const ownerUid = requireUser(request.auth?.uid);
-  const token = getToken((request.data as Record<string, unknown> | undefined)?.token);
-  const ref = db.collection("publicShares").doc(hashToken(token));
+  const shareId = getShareId((request.data as Record<string, unknown> | undefined)?.shareId);
+  const ref = db.collection("publicShares").doc(shareId);
   const snapshot = await ref.get();
   if (!snapshot.exists || snapshot.get("ownerUid") !== ownerUid) {
     throw new HttpsError("not-found", "This share link is unavailable.");
