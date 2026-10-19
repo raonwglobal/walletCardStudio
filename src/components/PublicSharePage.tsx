@@ -20,7 +20,13 @@ export default function PublicSharePage({ token }: { token: string }) {
 
   useEffect(() => {
     let cancelled = false;
-    const services = getFirebaseServices();
+    let services;
+    try {
+      services = getFirebaseServices();
+    } catch {
+      setStatus("unconfigured");
+      return;
+    }
     if (!services) {
       setStatus("unconfigured");
       return;
