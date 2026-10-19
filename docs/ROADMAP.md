@@ -13,8 +13,8 @@
 - [x] Establish React + TypeScript + Vite project structure.
 - [x] Generate QR codes locally; do not send contact payloads to a QR API.
 - [x] Add input validation, local storage error handling and automated checks.
-- [ ] Add server-backed share records with opaque random tokens, expiration, scopes and revocation.
-- [ ] Complete privacy review, dependency review and security test cases.
+- [x] Add Firebase server-side share endpoints with opaque tokens, expiry, approved fields, revocation and rate limiting (backend scaffold; frontend integration remains).
+- [ ] Complete Firebase emulator/integration tests, frontend share flow, and production privacy review.
 - [ ] Implement server-side Google Wallet pass issuance and validate issuer/class/object configuration.
 
 **Exit criteria:** typecheck, tests and production build pass; no client-side signing secrets; no base64-as-security share URLs; limitations are visible in the UI.
@@ -25,7 +25,8 @@
 - [x] Personal card gallery with search and category filters.
 - [x] Local save/restore and JSON export.
 - [x] vCard QR generation on-device.
-- [ ] Add installable PWA manifest/service worker and offline behavior.
+- [x] Add PWA manifest, service worker, and offline app-shell support.
+- [ ] Manually verify installation, offline behavior, service-worker updates and browser compatibility.
 - [ ] Add image compression, EXIF stripping and explicit photo retention controls.
 - [ ] Test small-screen, keyboard, screen-reader and browser compatibility.
 - [ ] Validate end-to-end completion with representative users.
