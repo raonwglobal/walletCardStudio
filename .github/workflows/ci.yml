@@ -22,8 +22,8 @@ jobs:
       - name: Frontend production build
         run: bun run build
       - name: Install Firebase Functions dependencies
-        run: npm --prefix functions install --no-audit --no-fund
+        run: cd functions && bun install
       - name: Firebase Functions unit tests
-        run: npm --prefix functions test
+        run: cd functions && bun run test
       - name: Firebase Functions typecheck/build
-        run: npm --prefix functions run build
+        run: cd functions && bun run build
