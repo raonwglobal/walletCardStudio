@@ -13,11 +13,17 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: latest
-      - name: Install dependencies
+      - name: Install frontend dependencies
         run: bun install
-      - name: Typecheck
+      - name: Frontend typecheck
         run: bun run typecheck
-      - name: Unit tests
+      - name: Frontend unit tests
         run: bun run test
-      - name: Production build
+      - name: Frontend production build
         run: bun run build
+      - name: Install Firebase Functions dependencies
+        run: npm --prefix functions install --no-audit --no-fund
+      - name: Firebase Functions unit tests
+        run: npm --prefix functions test
+      - name: Firebase Functions typecheck/build
+        run: npm --prefix functions run build
