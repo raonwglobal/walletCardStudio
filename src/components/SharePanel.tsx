@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider, type User } from "firebase/auth";
 import { httpsCallable } from "firebase/functions";
-import { Check, Copy, Link2, LockKeyhole, ShieldCheck, X } from "lucide-react";
+import { Copy, Link2, LockKeyhole, ShieldCheck, X } from "lucide-react";
 import type { CardRecord } from "../lib/cards";
 import { getFirebaseServices, isFirebaseConfigured, isShareManagementConfigured } from "../lib/firebase";
 
@@ -109,7 +109,7 @@ export default function SharePanel({ card, onNotice }: { card: CardRecord; onNot
       const url = new URL(window.location.href);
       url.search = "";
       url.hash = "";
-      url.searchParams.set("share", response.data.token);
+      url.hash = new URLSearchParams({ share: response.data.token }).toString();
       setCreatedUrl(url.toString());
       await refreshShares();
       onNotice("공유 링크를 만들었습니다. 링크를 받은 사람은 선택한 정보만 볼 수 있습니다.");
