@@ -9,6 +9,8 @@ import { createCard, loadCards, saveCards, toVCard, validateCard } from "./lib/c
 import { createQrDataUrl } from "./lib/qr";
 import SharePanel from "./components/SharePanel";
 import PublicSharePage from "./components/PublicSharePage";
+import SharePanel from "./components/SharePanel";
+import PublicSharePage from "./components/PublicSharePage";
 
 type Tab = "gallery" | "studio";
 type FilterValue = "all" | CardCategory;
@@ -230,10 +232,15 @@ function CardStudioApp() {
 
       <footer className="site-footer"><a className="wordmark footer-wordmark" href="#home" onClick={event => { event.preventDefault(); setTab("gallery"); }}><span className="logo-box"><WalletCards size={16} /></span><span>wallet<span className="wordmark-light">card</span></span></a><span>Thoughtfully made for better connections.</span><div><a href="https://github.com/raonwglobal/walletCardStudio" target="_blank" rel="noreferrer">Project on GitHub <ArrowDownToLine size={13} /></a><span>v0.1 · MVP</span></div></footer>
       {notice && <div className="toast" role="status"><Check size={16} />{notice}<button aria-label="알림 닫기" onClick={() => setNotice("")}><X size={14} /></button></div>}
-      <button className="help-button" aria-label="도움말" onClick={() => setNotice("현재 버전은 명함 편집, 로컬 저장, vCard QR 및 JSON 내보내기를 지원합니다. Wallet 발급과 서버 공유는 아직 연결되지 않았습니다.")}><CircleHelp size={19} /></button>
+      <button className="help-button" aria-label="도움말" onClick={() => setNotice("현재 버전은 명함 편집, 로컬 저장, vCard QR 및 JSON 내보내기를 지원합니다. Firebase 설정과 배포 후 보안 공개 링크를 사용할 수 있습니다.")}><CircleHelp size={19} /></button>
       <div className="mobile-bottom-nav"><button onClick={() => setTab("gallery")} className={tab === "gallery" ? "active" : ""}><LayoutTemplate size={18} />광장</button><button onClick={startNew}><Plus size={18} />만들기</button><button onClick={() => activeCard && editCard(activeCard)}><CreditCard size={18} />내 명함</button></div>
     </div>
   );
+}
+
+function CardStudioApp() {
+  const shareToken = new URLSearchParams(window.location.hash.slice(1)).get("share");
+  return shareToken ? <PublicSharePage token={shareToken} /> : <CardStudioApp />;
 }
 
 function App() {
