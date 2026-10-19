@@ -8,6 +8,14 @@
 - `src/styles.css`: responsive styling and accessible focus states.
 - Browser storage is a prototype persistence layer, not a cloud backup or security boundary.
 
+## PWA and offline behavior
+
+- `public/manifest.webmanifest`: install metadata and app icons.
+- `public/sw.js`: cached app shell, network-first navigation fallback and cache-first same-origin assets.
+- `src/main.tsx`: registers the service worker in production builds only.
+- Offline behavior covers the app shell and previously cached static assets; card data remains in localStorage and is not synced, encrypted, or backed up by the service worker.
+- Firebase callable requests and other cross-origin requests are not cached.
+
 ## Domain model
 
 - `CardDesign`: layout, colors, typography and template configuration; no identity fields.
