@@ -7,6 +7,8 @@ import {
 import type { CardCategory, CardInput, CardRecord } from "./lib/cards";
 import { createCard, loadCards, saveCards, toVCard, validateCard } from "./lib/cards";
 import { createQrDataUrl } from "./lib/qr";
+import SharePanel from "./components/SharePanel";
+import PublicSharePage from "./components/PublicSharePage";
 
 type Tab = "gallery" | "studio";
 type FilterValue = "all" | CardCategory;
@@ -39,7 +41,7 @@ function CardPreview({ card, compact = false }: { card: CardRecord; compact?: bo
   );
 }
 
-function App() {
+function CardStudioApp() {
   const [cards, setCards] = useState<CardRecord[]>(() => loadCards());
   const [activeId, setActiveId] = useState<string>(() => loadCards()[0]?.id ?? "");
   const [tab, setTab] = useState<Tab>("gallery");
@@ -219,7 +221,7 @@ function App() {
               <aside className={`preview-panel ${mobilePreview ? "preview-expanded" : ""}`}><div className="preview-panel-head"><div><span className="eyebrow muted">LIVE PREVIEW</span><h2>실시간 미리보기</h2></div><span className="live-indicator"><i /> LIVE</span></div><CardPreview card={{ ...draft, id: editingId ?? "draft", createdAt: "", updatedAt: "" }} /><div className="preview-actions"><button className="button-secondary" type="button" onClick={() => { setShowQr(true); }}><Grid2X2 size={16} /> vCard QR 보기</button><button className="button-secondary" type="button" onClick={() => { const errorsNow = validateCard(draft); setErrors(errorsNow); if (!errorsNow.length) { const card = { ...draft, id: editingId ?? "preview", createdAt: "", updatedAt: "" } as CardRecord; void copyVCard(card); } }}><Copy size={16} /> vCard 복사</button><button className="button-secondary" type="button" onClick={() => { const errorsNow = validateCard(draft); setErrors(errorsNow); if (!errorsNow.length) exportJson({ ...draft, id: editingId ?? "preview", createdAt: "", updatedAt: "" } as CardRecord); }}><ArrowDownToLine size={16} /> JSON 내보내기</button></div>
                 {showQr && <div className="qr-panel"><div className="qr-head"><strong>vCard QR</strong><button className="icon-button" aria-label="QR 닫기" onClick={() => setShowQr(false)}><X size={16} /></button></div>{qrUrl ? <img className="qr-image" src={qrUrl} alt="명함 연락처 vCard QR 코드" /> : <div className="qr-placeholder">QR 생성 중…</div>}<p>QR에는 명함의 연락처 정보가 포함됩니다. 스캔한 사람이 해당 정보를 볼 수 있으니 공유 전에 확인하세요.</p></div>}
                 <div className="wallet-callout"><div className="wallet-callout-icon"><WalletCards size={18} /></div><div><strong>Google Wallet</strong><p>실제 Wallet 패스 발급은 서버 연동 후 활성화됩니다.</p></div><span className="coming-soon">준비 중</span></div>
-                <div className="wallet-callout security-callout"><div className="wallet-callout-icon"><ShieldCheck size={18} /></div><div><strong>보안 및 공유</strong><p>공개 링크는 만료·폐기 가능한 서버 토큰 기능이 구현된 뒤 제공됩니다.</p></div></div>
+                <SharePanel card={{ ...draft, id: editingId ?? "draft", createdAt: "", updatedAt: "" }} onNotice={setNotice} />
               </aside>
             </div>
           </section>
@@ -232,6 +234,11 @@ function App() {
       <div className="mobile-bottom-nav"><button onClick={() => setTab("gallery")} className={tab === "gallery" ? "active" : ""}><LayoutTemplate size={18} />광장</button><button onClick={startNew}><Plus size={18} />만들기</button><button onClick={() => activeCard && editCard(activeCard)}><CreditCard size={18} />내 명함</button></div>
     </div>
   );
+}
+
+function App() {
+  const shareToken = new URLSearchParams(window.location.hash.slice(1)).get("share");
+  return shareToken ? <PublicSharePage token={shareToken} /> : <CardStudioApp />;
 }
 
 export default App;
