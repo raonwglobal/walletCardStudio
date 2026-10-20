@@ -1,47 +1,41 @@
-# Wallet Card Studio
+# Supabase self-hosted backend
 
-Mobile-first digital business card studio and employee badge platform.
+Wallet Card Studio keeps card editing, local persistence, QR generation and vCard export in the browser. The secure share service is moving from Firebase to Supabase-compatible open-source components.
 
-## Project status
+## Local frontend
 
-This repository was initialized from the Wallet Card Studio v5 development brief. The product is being delivered in gated phases; do not treat planned server-backed features as implemented.
+1. Copy `.env.example` to `.env.local`.
+2. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to your local Supabase API URL and public anon key.
+3. Run `bun install`, `bun run dev`, `bun run typecheck`, `bun run test`, and `bun run build`.
 
-- **P0 — Foundation & security:** project structure, validation, local QR generation, safe storage boundaries, automated checks.
-- **P1 — Mobile MVP:** responsive card editor, preview, local persistence, gallery and export/share-ready vCard QR.
-- **P2 — Monetization:** Free / Pro / Team packaging, usage metrics and pricing validation.
-- **P3 — B2B:** tenant-aware team administration, employee lifecycle, audit logs and integrations.
-- **Later / gated:** Google Wallet pass issuance, rotating OTP badges and physical access control require a trusted backend and security review.
+Only the public anon key belongs in the frontend. **Never** expose `SUPABASE_SERVICE_ROLE_KEY`, database passwords, or JWT signing secrets in any `VITE_*` variable.
 
-## Technology
+## Self-host Supabase
 
-- React + TypeScript + Vite
-- Tailwind CSS
-- Bun-compatible scripts
-- `qrcode` package for client-side QR generation (no third-party QR API receives contact details)
-- Vitest + Testing Library
+The official Supabase Docker Compose stack is maintained upstream and evolves independently of this app. Start from the official instructions rather than copying a stale third-party compose file:
 
-## Local development
+- https://supabase.com/docs/guides/self-hosting/docker
+- https://github.com/supabase/supabase/tree/master/docker
 
-```sh
-bun install
-bun run dev
-bun run typecheck
-bun run test
-bun run build
-```
+Use the upstream stack's `.env.example` as the starting point, rotate every default secret, configure TLS at a reverse proxy, restrict dashboard/studio access, and keep Postgres off the public internet. Persist Postgres data and test restoration before production use.
 
-## Security boundaries
+## Deploy this project's schema and function
 
-- Client-side storage is for a local prototype and is not a secure cloud backup.
-- A QR code containing vCard data intentionally exposes that data to anyone who scans it. Preview the payload before downloading.
-- Base64 is not encryption. Public share links must use server-generated opaque tokens with expiry and revocation; no base64-encoded profile URLs are implemented.
-- Google Wallet issuance must be signed by a trusted backend. Never place service-account credentials or signing keys in frontend code.
-- A displayed employee badge is not proof of authorization. Access control requires server-side validation, replay protection, revocation and audit logging.
+1. Install the Supabase CLI and log in/link the target project.
+2. Apply the migration: `supabase db push` (or run `supabase/migrations/20261020000100_secure_public_shares.sql` through the SQL editor).
+3. Set the function secrets: `supabase secrets set APP_ORIGIN=https://your-app.example` (Supabase supplies `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` to Edge Functions).
+4. Deploy: `supabase functions deploy share-links --no-verify-jwt`. The function intentionally disables gateway JWT verification so anonymous token resolution can share the same endpoint; owner operations manually validate the bearer JWT with Supabase Auth. Keep the service-role key only in the Edge Function environment.
+5. In Supabase Auth, enable Google OAuth and set exact site URL / redirect allow-list entries for the deployed app and local development.
 
-## Product decisions
+## Security model
 
-See [docs/ROADMAP.md](docs/ROADMAP.md), [docs/SECURITY.md](docs/SECURITY.md), [docs/PRICING.md](docs/PRICING.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/METRICS.md](docs/METRICS.md) and [docs/QA-PLAN.md](docs/QA-PLAN.md).
+- Public-share tokens are generated with 256 bits of randomness; only their SHA-256 hashes are stored.
+- Public resolution returns only the allowlisted profile snapshot and rejects expired/revoked links.
+- Owner actions validate the JWT with Supabase Auth and scope list/revoke operations to the authenticated user ID.
+- RLS is enabled and there are deliberately no client table policies; the service role is only used server-side.
+- A database-backed per-minute request counter limits token resolution. Configure `APP_ORIGIN` to the exact production origin and enforce additional reverse-proxy rate limits in front of self-hosted deployments.
+- The app continues to save card drafts locally. This migration does not silently turn local cards into cloud-synced records.
 
-## Current limitations
+## Firebase migration status
 
-This initial frontend does not yet create server-backed public profiles, issue real Google Wallet passes, refresh employee OTPs, or authorize physical access. Those actions remain explicitly unavailable until the corresponding backend is implemented and tested.
+Firebase is no longer used by the frontend share UI. The old Firebase Functions and configuration files are retained temporarily during the cutover so they can be removed after deployment and data-retention requirements have been checked. Do not deploy both share backends as competing sources of truth.
