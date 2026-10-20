@@ -1,41 +1,61 @@
-# Supabase self-hosted backend
+# Wallet Card Studio
 
-Wallet Card Studio keeps card editing, local persistence, QR generation and vCard export in the browser. The secure share service is moving from Firebase to Supabase-compatible open-source components.
+Mobile-first digital business card studio and employee badge platform. The app keeps card editing, local persistence, QR generation and vCard export in the browser, with an optional server-backed secure sharing workflow.
 
-## Local frontend
+## Technology
+
+- React + TypeScript + Vite
+- Tailwind CSS
+- Supabase Auth, PostgreSQL and Edge Functions for secure public-share links
+- `qrcode` for local QR generation (contact details are not sent to a third-party QR API)
+- Vitest + Testing Library; Bun-compatible scripts
+
+## Local development
 
 1. Copy `.env.example` to `.env.local`.
-2. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` to your local Supabase API URL and public anon key.
-3. Run `bun install`, `bun run dev`, `bun run typecheck`, `bun run test`, and `bun run build`.
+2. Configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
+3. Run:
 
-Only the public anon key belongs in the frontend. **Never** expose `SUPABASE_SERVICE_ROLE_KEY`, database passwords, or JWT signing secrets in any `VITE_*` variable.
+```sh
+bun install
+bun run dev
+bun run typecheck
+bun run test
+bun run build
+```
 
-## Self-host Supabase
+## Self-hosted Supabase
 
-The official Supabase Docker Compose stack is maintained upstream and evolves independently of this app. Start from the official instructions rather than copying a stale third-party compose file:
+Use the official Supabase Docker Compose distribution and deployment guide:
 
 - https://supabase.com/docs/guides/self-hosting/docker
 - https://github.com/supabase/supabase/tree/master/docker
 
-Use the upstream stack's `.env.example` as the starting point, rotate every default secret, configure TLS at a reverse proxy, restrict dashboard/studio access, and keep Postgres off the public internet. Persist Postgres data and test restoration before production use.
+The upstream stack changes independently of this project. Pin a reviewed upstream release/commit, rotate all default secrets, terminate TLS at a maintained reverse proxy, restrict Studio/dashboard access, keep PostgreSQL private, persist data, and test backup restoration.
 
-## Deploy this project's schema and function
+### Apply the project backend
 
-1. Install the Supabase CLI and log in/link the target project.
-2. Apply the migration: `supabase db push` (or run `supabase/migrations/20261020000100_secure_public_shares.sql` through the SQL editor).
-3. Set the function secrets: `supabase secrets set APP_ORIGIN=https://your-app.example` (Supabase supplies `SUPABASE_URL`, `SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` to Edge Functions).
-4. Deploy: `supabase functions deploy share-links --no-verify-jwt`. The function intentionally disables gateway JWT verification so anonymous token resolution can share the same endpoint; owner operations manually validate the bearer JWT with Supabase Auth. Keep the service-role key only in the Edge Function environment.
-5. In Supabase Auth, enable Google OAuth and set exact site URL / redirect allow-list entries for the deployed app and local development.
+1. Install the Supabase CLI and link the target project.
+2. Apply the migration with `supabase db push` or execute `supabase/migrations/20261020000100_secure_public_shares.sql`.
+3. Set the production app origin: `supabase secrets set APP_ORIGIN=https://your-app.example`.
+4. Deploy the function: `supabase functions deploy share-links --no-verify-jwt`.
+5. Enable Google OAuth in Supabase Auth and configure exact site and redirect allow-list URLs.
+6. Verify create/list/resolve/revoke, expiry, ownership isolation, invalid tokens, rate limiting and backup restoration before production use.
 
-## Security model
+The function disables gateway JWT verification so anonymous token resolution can use the same endpoint. It manually validates Supabase Auth JWTs for owner operations. The service-role key remains server-side.
 
-- Public-share tokens are generated with 256 bits of randomness; only their SHA-256 hashes are stored.
-- Public resolution returns only the allowlisted profile snapshot and rejects expired/revoked links.
-- Owner actions validate the JWT with Supabase Auth and scope list/revoke operations to the authenticated user ID.
-- RLS is enabled and there are deliberately no client table policies; the service role is only used server-side.
-- A database-backed per-minute request counter limits token resolution. Configure `APP_ORIGIN` to the exact production origin and enforce additional reverse-proxy rate limits in front of self-hosted deployments.
-- The app continues to save card drafts locally. This migration does not silently turn local cards into cloud-synced records.
+## Security boundaries
 
-## Backend migration status
+- Only the public anon key belongs in frontend configuration. Never expose `SUPABASE_SERVICE_ROLE_KEY`, database passwords or JWT signing secrets in `VITE_*` variables.
+- Share tokens contain 256 bits of randomness; only SHA-256 hashes are stored. Raw tokens are returned only once.
+- RLS is enabled on share tables without direct anon/authenticated table policies. Owner actions are scoped to the authenticated user.
+- Public links show only the explicitly selected profile snapshot and stop working after expiry or revocation.
+- Configure `APP_ORIGIN` to the exact app origin and enforce additional request limits at the trusted reverse proxy.
+- Browser storage is not encrypted cloud backup. Card records remain local-first; this migration does not add cloud synchronization.
+- A vCard QR exposes its included fields to anyone who scans it. A displayed employee badge or QR is not proof of authorization.
 
-The application and share backend code now target Supabase. Existing Firebase-hosted share records are not automatically imported; any required link continuity needs a separate controlled export/import plan. Recreate active share links after cutover unless an explicit migration is performed.
+## Cutover limitations
+
+Existing Firebase-hosted share records are not automatically imported. Recreate active links after cutover unless a separate controlled export/import is completed. This backend does not yet implement cloud card sync, team tenancy, employee lifecycle, audit trails, Google Wallet pass issuance or physical access authorization.
+
+See [Architecture](docs/ARCHITECTURE.md), [Security](docs/SECURITY.md), [Secure sharing implementation](docs/SECURE-SHARING-IMPLEMENTATION.md), [Self-hosting guide](docs/SUPABASE-SELF-HOSTING.md), [Roadmap](docs/ROADMAP.md), [QA plan](docs/QA-PLAN.md), [PWA notes](docs/PWA.md), [Pricing](docs/PRICING.md) and [Metrics](docs/METRICS.md).
