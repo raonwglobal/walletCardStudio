@@ -1,10 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.4";
+import { isValidShareToken, normalizeShareProfile } from "../_shared/share-validation.ts";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const FIELDS = ["name", "role", "company", "email", "phone", "website", "location", "bio"] as const;
-const LIMITS: Record<string, number> = { name: 120, role: 120, company: 120, email: 254, phone: 64, website: 2048, location: 160, bio: 500 };
 const corsHeaders = {
   "Access-Control-Allow-Origin": Deno.env.get("APP_ORIGIN") ?? "http://localhost:5173",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -19,42 +18,11 @@ function fail(message: string, status: number) { return response({ error: messag
 function tokenString(bytes: Uint8Array) {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
-  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
-}
-function validToken(token: unknown): token is string {
-  return typeof token === "string" && /^[A-Za-z0-9_-]{43}$/.test(token);
+  return btoa(binary).replace(/\\+/g, "-").replace(/\\//g, "_").replace(/=+$/g, "");
 }
 async function sha256(value: string) {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
   return [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, "0")).join("");
-}
-function normalizeProfile(input: unknown, requested: unknown) {
-  if (!input || typeof input !== "object" || Array.isArray(input) || !Array.isArray(requested) || requested.length === 0) {
-    throw new Error("프로필과 공개할 항목을 확인해 주세요.");
-  }
-  const fields: string[] = [];
-  for (const field of requested) {
-    if (typeof field !== "string" || !FIELDS.includes(field as typeof FIELDS[number])) throw new Error("허용되지 않은 공개 항목입니다.");
-    if (!fields.includes(field)) fields.push(field);
-  }
-  if (!fields.includes("name")) throw new Error("이름은 공개 필수 항목입니다.");
-  const source = input as Record<string, unknown>;
-  const profile: Record<string, string> = {};
-  for (const field of fields) {
-    const raw = source[field];
-    if (typeof raw !== "string") { if (field === "name") throw new Error("이름을 입력해 주세요."); else continue; }
-    const value = raw.trim();
-    if (!value) { if (field === "name") throw new Error("이름을 입력해 주세요."); else continue; }
-    if (value.length > LIMITS[field]) throw new Error(`${field} 항목이 허용 길이를 초과했습니다.`);
-    if (field === "email" && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) throw new Error("이메일 형식이 올바르지 않습니다.");
-    if (field === "website") {
-      let parsed: URL;
-      try { parsed = new URL(value); } catch { throw new Error("웹사이트 주소가 올바르지 않습니다."); }
-      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") throw new Error("웹사이트는 HTTP 또는 HTTPS 주소여야 합니다.");
-    }
-    profile[field] = value;
-  }
-  return { fields, profile };
 }
 
 Deno.serve(async request => {
@@ -66,7 +34,7 @@ Deno.serve(async request => {
   const admin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 
   if (action === "resolve") {
-    if (!validToken(body.token)) return fail("공유 링크를 사용할 수 없습니다.", 404);
+    if (!isValidShareToken(body.token)) return fail("공유 링크를 사용할 수 없습니다.", 404);
     const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const rateKey = await sha256(forwarded);
     const minuteBucket = Math.floor(Date.now() / 60000);
@@ -94,8 +62,8 @@ Deno.serve(async request => {
   const ownerId = authData.user.id;
 
   if (action === "create") {
-    let normalized: ReturnType<typeof normalizeProfile>;
-    try { normalized = normalizeProfile(body.profile, body.fields); } catch (error) {
+    let normalized: ReturnType<typeof normalizeShareProfile>;
+    try { normalized = normalizeShareProfile(body.profile, body.fields); } catch (error) {
       return fail(error instanceof Error ? error.message : "공유 정보를 확인해 주세요.", 400);
     }
     const days = body.expiresInDays === undefined ? 7 : body.expiresInDays;
