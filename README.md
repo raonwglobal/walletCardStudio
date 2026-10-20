@@ -36,6 +36,6 @@ Use the upstream stack's `.env.example` as the starting point, rotate every defa
 - A database-backed per-minute request counter limits token resolution. Configure `APP_ORIGIN` to the exact production origin and enforce additional reverse-proxy rate limits in front of self-hosted deployments.
 - The app continues to save card drafts locally. This migration does not silently turn local cards into cloud-synced records.
 
-## Firebase migration status
+## Backend migration status
 
-Firebase is no longer used by the frontend share UI. The old Firebase Functions and configuration files are retained temporarily during the cutover so they can be removed after deployment and data-retention requirements have been checked. Do not deploy both share backends as competing sources of truth.
+The application and share backend code now target Supabase. Existing Firebase-hosted share records are not automatically imported; any required link continuity needs a separate controlled export/import plan. Recreate active share links after cutover unless an explicit migration is performed.
