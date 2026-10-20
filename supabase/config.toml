@@ -1,0 +1,6 @@
+project_id = "wallet-card-studio"
+
+[functions.share-links]
+# The endpoint manually validates JWTs for owner actions and permits only
+# the token-based "resolve" action without a user session.
+verify_jwt = false

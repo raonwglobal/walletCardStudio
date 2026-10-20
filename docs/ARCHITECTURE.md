@@ -1,53 +1,30 @@
 # Architecture
 
-## Initial frontend
+## Frontend
 
-- `src/App.tsx`: editor, live card preview, gallery and user-facing capability boundaries.
-- `src/lib/cards.ts`: card model, validation, local persistence and export helpers.
-- `src/lib/qr.ts`: local QR payload generation using the `qrcode` package.
-- `src/styles.css`: responsive styling and accessible focus states.
-- Browser storage is a prototype persistence layer, not a cloud backup or security boundary.
+- `src/App.tsx`: card editor, preview, gallery and capability boundaries.
+- `src/lib/cards.ts`: card validation, local persistence and export.
+- `src/lib/qr.ts`: client-side QR payload generation.
+- `src/lib/supabase.ts`: public browser client configuration and typed Edge Function invocation boundary.
+- Card records remain local-first; this backend migration does not imply cloud sync.
 
-## PWA and offline behavior
+## Supabase-compatible share backend
 
-- `public/manifest.webmanifest`: install metadata and app icons.
-- `public/sw.js`: cached app shell, network-first navigation fallback and cache-first same-origin assets.
-- `src/main.tsx`: registers the service worker in production builds only.
-- Offline behavior covers the app shell and previously cached static assets; card data remains in localStorage and is not synced, encrypted, or backed up by the service worker.
-- Firebase callable requests and other cross-origin requests are not cached.
+- `supabase/migrations/20261020000100_secure_public_shares.sql`: share table, indexes, RLS and atomic rate-limit RPC.
+- `supabase/functions/share-links/index.ts`: create/list/resolve/revoke actions.
+- `public.public_shares`: owner ID, SHA-256 token hash, allowlisted profile snapshot, selected fields, expiry and revocation timestamp.
+- `public.share_rate_limits`: hashed caller key and per-minute request counters.
+- RLS is enabled with no anon/authenticated table policies. Edge Functions use the service role only server-side and explicitly validate the caller JWT for owner actions.
+- Tokens contain 256 bits of randomness; raw tokens are returned only at creation and are never persisted.
+- Public resolution receives the token in the POST body, checks expiry/revocation and returns only the approved snapshot.
 
-## Domain model
+## Self-hosted deployment
 
-- `CardDesign`: layout, colors, typography and template configuration; no identity fields.
-- `PublicCardProfile`: explicitly approved fields safe for public display.
-- `CardRecord`: owner, profile reference, design, timestamps and lifecycle status.
-- `ShareRecord`: server-side opaque token hash, approved field snapshot, owner, expiration and revocation state.
+Use the official Supabase Docker Compose distribution, with a maintained TLS reverse proxy, protected Studio/dashboard, private database network, secret rotation, persistent storage and tested backups. See [SUPABASE-SELF-HOSTING.md](./SUPABASE-SELF-HOSTING.md).
 
-Keep design configuration separate from personal profile data so that templates can be reused without copying PII.
+## Security boundaries
 
-## Firebase backend
-
-- `functions/src/index.ts`: callable create, resolve and revoke share endpoints.
-- `functions/src/sharing.ts`: 256-bit opaque token generation, SHA-256 hashing, field allowlist and input validation.
-- `publicShares/{sha256(token)}`: stores only the token hash as document ID, owner UID, approved profile snapshot, selected fields, expiry, revocation state and schema version.
-- `shareRateLimits/{hash(ip + minute)}`: short-lived counters used to throttle public resolution.
-- Firestore rules deny direct client access; trusted Cloud Functions use the Admin SDK.
-- Authenticated creation/revocation requires Firebase Authentication and App Check. Public resolution receives the token in the callable body.
-
-The Firebase service is backend-only until the UI authentication, field selection, share page, revoke flow, emulator tests and deployment are complete. Do not label public sharing as live before those gates pass.
-
-## Future backend boundaries
-
-1. Authentication and authorization.
-2. Card/profile API with ownership checks and tenant isolation.
-3. Share-token service with scoped access, expiration, revocation and rate limiting.
-4. Google Wallet issuer service; signing keys remain server-side.
-5. Organization administration, audit events and billing.
-6. Optional access validation service, isolated from public profile endpoints.
-
-## Data flow constraints
-
-- QR is generated on-device. A vCard QR embeds its selected contact fields, so warn users before exporting.
-- Do not encode full personal profiles in URL query strings or claim Base64 is encryption.
-- Never put secrets, signing keys, or privileged API credentials in Vite environment variables prefixed with `VITE_`.
-- Do not treat a visual badge or QR scan as authorization. Access decisions must be server-side.
+- Local browser storage is not a secure cloud backup.
+- vCard QR intentionally exposes the included contact fields to anyone who scans it.
+- Never expose service-role keys or database credentials in Vite environment variables.
+- A visible badge or QR is not proof of authorization; physical access needs separate server-side validation, replay protection and audit logging.
