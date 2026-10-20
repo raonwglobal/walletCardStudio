@@ -21,6 +21,10 @@ create index if not exists public_shares_expiry_idx
 alter table public.public_shares enable row level security;
 -- Deliberately no anon/authenticated policies. All access goes through the
 -- Edge Function using the service-role key after explicit authorization.
+-- Revoke table privileges as well as relying on RLS, so direct client access
+-- is denied at the SQL privilege layer. The Edge Function uses service_role.
+revoke all on table public.public_shares from public, anon, authenticated;
+grant select, insert, update, delete on table public.public_shares to service_role;
 
 create table if not exists public.share_rate_limits (
   rate_key text not null,
@@ -29,6 +33,7 @@ create table if not exists public.share_rate_limits (
   primary key (rate_key, minute_bucket)
 );
 alter table public.share_rate_limits enable row level security;
+revoke all on table public.share_rate_limits from public, anon, authenticated;
 
 create or replace function public.consume_share_rate_limit(
   p_rate_key text, p_minute_bucket bigint, p_limit integer default 60
