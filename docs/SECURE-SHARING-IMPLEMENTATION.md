@@ -12,9 +12,20 @@ The secure sharing backend uses Supabase Auth, PostgreSQL and the `share-links` 
 - Database: RLS is enabled and no direct anon/authenticated table policies are granted. The service-role key is confined to Edge Function runtime.
 - Abuse controls: atomic per-minute database counter plus reverse-proxy rate limiting recommended for self-hosted deployment.
 
+## Automated validation
+
+The pure share-validation rules live in `supabase/functions/_shared/share-validation.ts` and have a Deno unit-test suite. CI runs:
+
+```sh
+deno check supabase/functions/share-links/index.ts
+deno test supabase/functions/_shared/share-validation.test.ts
+```
+
+Coverage includes token format, selected-field allowlisting, required name, duplicate fields, malformed profile input, email/URL validation, field-length limits and omission of blank optional values.
+
 ## Deploy and verify
 
-See [README.md](../README.md) and [SUPABASE-SELF-HOSTING.md](./SUPABASE-SELF-HOSTING.md). Before production, test valid/invalid tokens, expiry, revocation, owner isolation, malformed fields, rate limiting and backup restoration.
+See [README.md](../README.md) and [SUPABASE-SELF-HOSTING.md](./SUPABASE-SELF-HOSTING.md). Before production, also run deployment-level tests for valid/invalid tokens, expiry, revocation, owner isolation, rate limiting and backup restoration.
 
 ## Scope
 
