@@ -51,7 +51,10 @@ export default function SharePanel({ card, onNotice }: { card: CardRecord; onNot
       setSignedIn(Boolean(user));
       setUserLabel(user?.user_metadata?.full_name || user?.email || "");
       if (user) {
-        void refreshShares().catch(() => setError("공유 목록을 불러오지 못했습니다. 연결 상태를 확인해 주세요."));
+        // Defer network work until the Supabase auth-state callback releases its lock.
+        window.setTimeout(() => {
+          if (active) void refreshShares().catch(() => setError("공유 목록을 불러오지 못했습니다. 연결 상태를 확인해 주세요."));
+        }, 0);
       } else {
         setShares([]);
         setCreatedUrl("");
