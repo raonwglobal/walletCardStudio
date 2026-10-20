@@ -28,3 +28,18 @@ jobs:
         run: deno check supabase/functions/share-links/index.ts
       - name: Supabase share validation unit tests
         run: deno test supabase/functions/_shared/share-validation.test.ts
+
+  database-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start local Supabase stack
+        run: supabase start
+      - name: Reset database and apply migrations
+        run: supabase db reset
+      - name: Run pgTAP database security tests
+        run: supabase test db
