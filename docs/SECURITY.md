@@ -9,10 +9,15 @@
 - Owner share operations must validate Supabase Auth JWTs and scope queries by the authenticated user ID.
 - RLS is enabled on share and rate-limit tables without direct client policies. The service-role key is server-only.
 - Never put service-role keys, database credentials or signing keys in Vite `VITE_*` environment variables.
+- The resolve rate limiter uses a client address forwarded by the reverse proxy. The proxy must overwrite `x-forwarded-for`; do not trust caller-supplied forwarding headers.
 
 ## Self-hosted operations
 
 Use TLS, rotate default secrets, restrict Studio/dashboard access, keep PostgreSQL private, patch the host and images, monitor errors and disk space, and regularly test encrypted off-host backups. Add reverse-proxy request limits to the Edge Function endpoint.
+
+## Automated validation
+
+Deno tests cover token format and public-profile input validation. These tests complement, but do not replace, end-to-end authorization tests against a deployed Supabase environment.
 
 ## Out of scope
 

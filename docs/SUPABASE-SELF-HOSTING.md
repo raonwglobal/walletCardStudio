@@ -12,7 +12,7 @@ Keep the Wallet Card Studio frontend and secure public-share backend portable an
 4. Rotate all default keys/passwords and store secrets outside Git. Restrict service-role credentials to Edge Function runtime.
 5. Configure Auth Google OAuth and exact redirect URLs.
 6. Apply the project migration and deploy `share-links` as described in [README.md](../README.md).
-7. Run end-to-end tests for create/list/resolve/revoke, expiry, invalid tokens, ownership isolation and rate limiting.
+7. Run the Deno unit tests in CI and then perform end-to-end tests for create/list/resolve/revoke, expiry, invalid tokens, ownership isolation and rate limiting.
 8. Take a backup and perform a restore drill before production cutover.
 
 ## Operational requirements
@@ -21,6 +21,7 @@ Keep the Wallet Card Studio frontend and secure public-share backend portable an
 - Back up PostgreSQL and any enabled object storage; encrypt backups and keep a copy outside the host.
 - Monitor disk space, API/Edge Function errors, database health and backup freshness.
 - Configure an exact `APP_ORIGIN`; additionally rate-limit `/functions/v1/share-links` at the reverse proxy.
+- The Edge Function uses `x-forwarded-for` for the resolve rate-limit key. Configure the trusted reverse proxy to overwrite this header from the actual client connection and prevent direct untrusted access to the Edge Function gateway; otherwise callers may spoof the rate-limit key.
 - Keep a rollback window before deleting Firebase data or credentials. This repository retains Firebase deployment artifacts temporarily, but the frontend's share path now targets Supabase.
 
 ## Cutover caveat
