@@ -10,13 +10,13 @@ Create a Pages project in the Cloudflare dashboard and connect the GitHub reposi
 | --- | --- |
 | Framework preset | Vite |
 | Production branch | `main` |
-| Build command | `bun run build` |
+| Build command | `bun run ci:cloudflare` |
 | Build output directory | `dist` |
 | Root directory | repository root (leave blank/default) |
 | Node/Bun runtime | Use Bun; the repository CI uses Bun |
 | Preview deployments | Enabled for pull requests; preview URLs are not production |
 
-The build command runs `tsc -b && vite build`, as defined in `package.json`. Vite writes the static site to `dist/`. Pages provides SPA fallback when the output contains `index.html` and no top-level `404.html`; do not add a top-level `404.html` unless the routing strategy changes.
+The build command runs `bun run typecheck && bun run test && vite build` via the `ci:cloudflare` script in `package.json`. A type-check or unit-test failure returns a non-zero exit code, so Cloudflare marks the build as failed and does not publish the generated assets. Vite writes the static site to `dist/`. Pages provides SPA fallback when the output contains `index.html` and no top-level `404.html`; do not add a top-level `404.html` unless the routing strategy changes.
 
 ## Build environment variables
 
@@ -46,18 +46,19 @@ Never put the Supabase service-role key in Cloudflare Pages frontend variables. 
 ## Required release gate
 
 1. Create a feature branch and open a pull request against `main`.
-2. Require the existing GitHub Actions `CI / verify` and `CI / database-security` jobs to pass.
-3. Require at least one approving review, and dismiss stale approvals / require approval of the latest push if supported by the repository's rules.
-4. Do not merge while checks are pending or failing.
-5. Merge the approved PR to `main`; the Pages Git integration then builds and publishes the production deployment.
-6. Confirm the Pages deployment's commit SHA matches the merged GitHub commit before announcing release.
+2. Require the Cloudflare Pages preview build to pass; it runs type-check, frontend unit tests, and the production Vite build.
+3. Run the GitHub Actions `CI` workflow manually when needed to cover the Supabase Edge Function checks and database-security tests; Cloudflare's standard Pages build does not replace the local Supabase stack/pgTAP tests.
+4. Require at least one approving review, and dismiss stale approvals / require approval of the latest push if supported by the repository's rules.
+5. Do not merge while required checks are pending or failing.
+6. Merge the approved PR to `main`; the Pages Git integration then builds and publishes the production deployment.
+7. Confirm the Pages deployment's commit SHA matches the merged GitHub commit before announcing release.
 
 Cloudflare Pages Git integration can create a non-production preview deployment for a PR before CI/review is complete. Keep preview URLs separate from production and do not treat preview publication as approval. Production should be tied only to the protected `main` branch.
 
 ## Verification checklist
 
 - [ ] Pages project is connected to the correct private GitHub repository.
-- [ ] Production branch is `main`, build command is `bun run build`, output is `dist`.
+- [ ] Production branch is `main`, build command is `bun run ci:cloudflare`, output is `dist`.
 - [ ] Production and Preview environment variables are set correctly.
 - [ ] The deployed commit SHA matches the reviewed merge commit.
 - [ ] App loads over HTTPS and can create/edit a card, generate a QR code, and export vCard.
