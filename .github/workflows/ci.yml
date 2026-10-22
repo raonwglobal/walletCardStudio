@@ -1,12 +1,21 @@
 name: CI
 
+# Automatic runs are temporarily disabled while GitHub-hosted jobs fail
+# before runner allocation. Run this workflow manually from Actions when needed.
+# Keep all verification steps so CI can be re-enabled without reconstructing them.
 on:
-  push:
-    branches: [main, "feat/**", "fix/**", "test/**"]
-  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   verify:
+    name: Frontend and Edge Function verification
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -30,6 +39,7 @@ jobs:
         run: deno test supabase/functions/_shared/share-validation.test.ts
 
   database-security:
+    name: Supabase database security tests
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
