@@ -9,7 +9,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "typecheck": "tsc -b --pretty",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "ci:cloudflare": "bun run typecheck && bun run test && vite build"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
