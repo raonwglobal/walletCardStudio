@@ -230,7 +230,7 @@ function CardStudioApp() {
             {selectedDesign && <section className="design-selection" aria-live="polite">
               <div className="selection-copy"><span className="eyebrow muted">YOUR SELECTED DESIGN</span><h2>{selectedDesign.kind === "template" ? cardTemplates.find(item => item.id === selectedDesign.id)?.title : cards.find(item => item.id === selectedDesign.id)?.name}</h2><p>{selectedDesign.kind === "template" ? "이 템플릿을 기반으로 새 명함을 만듭니다. 템플릿 원본은 그대로 유지됩니다." : "선택한 카드를 복사해 새 명함으로 편집합니다. 원본 카드의 내용은 변경되지 않습니다."}</p></div>
               <div className="selection-actions"><button className="button-secondary" onClick={() => setSelectedDesign(null)}>선택 취소</button><button className="button-primary" onClick={() => { if (selectedDesign.kind === "template") { const template = cardTemplates.find(item => item.id === selectedDesign.id); if (template) useTemplate(template); } else { const card = cards.find(item => item.id === selectedDesign.id); if (card) duplicateSavedCard(card); } }}><Sparkles size={16} /> 이 디자인으로 만들기 <ArrowRight size={16} /></button></div>
-            </section>
+            </section>}
           </>
         ) : (
           <section className="studio-page">
