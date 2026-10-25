@@ -53,7 +53,6 @@ export default function CardDesignShowcase({ card, templateId = "", title, compa
           <div className="showcase-footer"><span>{card.company || "WALLET / STUDIO"}</span><span>02 / 02</span></div>
         </>}
       </article>
-      {compact && <button type="button" className="compact-side-toggle" onClick={() => setSide(side === "front" ? "back" : "front")} aria-label={`${displayTitle} ${side === "front" ? "뒷면" : "앞면"} 보기`}>{side === "front" ? "뒷면 보기" : "앞면 보기"} <ArrowLeftRight size={12} /></button>}
       {!compact && <p className="showcase-hint">앞면과 뒷면을 전환해 디자인과 연락처 배치를 확인하세요. 사진이 있는 템플릿은 앞면에 이미지가 포함됩니다.</p>}
     </div>
   );
