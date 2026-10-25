@@ -1,16 +1,22 @@
 name: CI
 
-# Automatic runs are temporarily disabled while GitHub-hosted jobs fail
-# before runner allocation. Run this workflow manually from Actions when needed.
-# Keep all verification steps so CI can be re-enabled without reconstructing them.
 on:
+  push:
+    branches:
+      - main
+      - "feat/**"
+      - "fix/**"
+      - "chore/**"
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
