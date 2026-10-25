@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ArrowLeftRight, Globe2, Mail, MapPin, Phone, Sparkles } from "lucide-react";
 import type { CardRecord } from "../lib/cards";
+import "./card-showcase.css";
 
 type Props = {
   card: CardRecord;
