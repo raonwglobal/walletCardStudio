@@ -9,9 +9,12 @@ import { createCard, loadCards, saveCards, toVCard, validateCard } from "./lib/c
 import { createQrDataUrl } from "./lib/qr";
 import SharePanel from "./components/SharePanel";
 import PublicSharePage from "./components/PublicSharePage";
+import { cardTemplates, type CardTemplate } from "./lib/templates";
+import "./plaza.css";
 
 type Tab = "gallery" | "studio";
 type FilterValue = "all" | CardCategory;
+type SelectedDesign = { kind: "template"; id: string } | { kind: "saved"; id: string };
 
 const blankInput: CardInput = {
   name: "", role: "", company: "", email: "", phone: "", website: "",
@@ -54,6 +57,7 @@ function CardStudioApp() {
   const [qrUrl, setQrUrl] = useState("");
   const [showQr, setShowQr] = useState(false);
   const [mobilePreview, setMobilePreview] = useState(false);
+  const [selectedDesign, setSelectedDesign] = useState<SelectedDesign | null>(null);
 
   const activeCard = cards.find(card => card.id === activeId) ?? cards[0];
   const filteredCards = useMemo(() => cards.filter(card => {
@@ -79,6 +83,7 @@ function CardStudioApp() {
   }, [draft, editingId, showQr]);
 
   function startNew() {
+    setSelectedDesign(null);
     setDraft(blankInput);
     setEditingId(null);
     setErrors([]);
@@ -88,6 +93,7 @@ function CardStudioApp() {
   }
 
   function editCard(card: CardRecord) {
+    setSelectedDesign(null);
     const input: CardInput = {
     name: card.name, role: card.role, company: card.company, email: card.email,
     phone: card.phone, website: card.website, location: card.location, bio: card.bio,
@@ -99,6 +105,29 @@ function CardStudioApp() {
     setTab("studio");
     setShowQr(false);
     setMobilePreview(false);
+  }
+
+  function useTemplate(template: CardTemplate) {
+    setDraft({ ...template.card });
+    setEditingId(null);
+    setErrors([]);
+    setTab("studio");
+    setShowQr(false);
+    setMobilePreview(false);
+    setSelectedDesign(null);
+    setNotice(`“${template.title}” 템플릿으로 새 명함을 시작합니다. 원본 디자인은 변경되지 않습니다.`);
+  }
+
+  function duplicateSavedCard(card: CardRecord) {
+    const { name, role, company, email, phone, website, location, bio, category, theme } = card;
+    setDraft({ name, role, company, email, phone, website, location, bio, category, theme });
+    setEditingId(null);
+    setErrors([]);
+    setTab("studio");
+    setShowQr(false);
+    setMobilePreview(false);
+    setSelectedDesign(null);
+    setNotice("선택한 카드를 복사해 새 명함으로 편집합니다. 원본은 유지됩니다.");
   }
 
   function saveDraft() {
@@ -188,9 +217,20 @@ function CardStudioApp() {
               <div className="section-heading"><div><div className="eyebrow muted">THE COLLECTION</div><h2>명함 광장 <span className="count-badge">{filteredCards.length.toString().padStart(2, "0")}</span></h2><p>스타일을 탐색하고 나만의 명함으로 시작해 보세요.</p></div><button className="text-action" onClick={startNew}>새 명함 만들기 <ArrowRight size={15} /></button></div>
               <div className="gallery-tools"><div className="search-box"><Search size={16} /><input aria-label="명함 검색" value={query} onChange={event => setQuery(event.target.value)} placeholder="이름, 직무 또는 회사 검색" /></div><div className="filter-row" aria-label="명함 유형 필터"><Filter size={15} />{categories.map(item => <button key={item.value} className={filter === item.value ? "filter-chip selected" : "filter-chip"} onClick={() => setFilter(item.value)}>{item.label}</button>)}</div></div>
               <div className="gallery-grid">
-                {filteredCards.map(card => <div className="gallery-item" key={card.id}><button className="preview-button" onClick={() => { setActiveId(card.id); editCard(card); }} aria-label={`${card.name} 명함 편집`}><CardPreview card={card} compact /></button><div className="gallery-item-meta"><div><strong>{card.name}</strong><span>{card.role}{card.company ? ` · ${card.company}` : ""}</span></div><button className="icon-button" aria-label={`${card.name} 명함 선택`} onClick={() => { setActiveId(card.id); setNotice(`${card.name} 명함을 선택했습니다.`); }}><ArrowRight size={17} /></button></div></div>)}
-                {filteredCards.length === 0 && <div className="empty-state"><CircleHelp size={24} /><strong>검색 결과가 없습니다.</strong><span>다른 검색어를 입력하거나 새 명함을 만들어 보세요.</span><button className="button-secondary" onClick={startNew}>명함 만들기</button></div>}
+                {filteredCards.map(card => <div className={`gallery-item ${selectedDesign?.kind === "saved" && selectedDesign.id === card.id ? "design-selected" : ""}`} key={card.id}><button className="preview-button" onClick={() => setSelectedDesign({ kind: "saved", id: card.id })} aria-label={`${card.name} 명함 미리보기 선택`} aria-pressed={selectedDesign?.kind === "saved" && selectedDesign.id === card.id}><CardPreview card={card} compact /></button><div className="gallery-item-meta"><div><strong>{card.name}</strong><span>{card.role}{card.company ? ` · ${card.company}` : ""}</span></div><button className="icon-button" aria-label={`${card.name} 명함 미리보기 선택`} onClick={() => setSelectedDesign({ kind: "saved", id: card.id })}><Eye size={17} /></button></div></div>)}
+                {filteredCards.length === 0 && <div className="empty-state"><CircleHelp size={24} /><strong>저장된 카드가 없습니다.</strong><span>템플릿을 선택해 첫 명함을 만들어 보세요.</span><button className="button-secondary" onClick={() => document.getElementById("design-templates")?.scrollIntoView({ behavior: "smooth" })}>템플릿 둘러보기</button></div>}
               </div>
+            </section>
+            <section className="gallery-section template-section" id="design-templates">
+              <div className="section-heading"><div><div className="eyebrow muted">START WITH A DESIGN</div><h2>디자인 템플릿 <span className="count-badge">{cardTemplates.length.toString().padStart(2, "0")}</span></h2><p>마음에 드는 디자인을 먼저 선택하고, 스튜디오에서 내 정보로 바꾸세요.</p></div></div>
+              <div className="gallery-grid template-grid">
+                {cardTemplates.map(template => <div className={`gallery-item ${selectedDesign?.kind === "template" && selectedDesign.id === template.id ? "design-selected" : ""}`} key={template.id}><button className="preview-button" onClick={() => setSelectedDesign({ kind: "template", id: template.id })} aria-label={`${template.title} 템플릿 미리보기 선택`} aria-pressed={selectedDesign?.kind === "template" && selectedDesign.id === template.id}><CardPreview card={template.card} compact /></button><div className="gallery-item-meta"><div><strong>{template.title}</strong><span>{template.description}</span></div><button className="icon-button" aria-label={`${template.title} 템플릿 선택`} onClick={() => setSelectedDesign({ kind: "template", id: template.id })}><Eye size={17} /></button></div><div className="template-label"><LayoutTemplate size={13} /> 기본 템플릿</div></div>)}
+              </div>
+            </section>
+            {selectedDesign && <section className="design-selection" aria-live="polite">
+              <div className="selection-copy"><span className="eyebrow muted">YOUR SELECTED DESIGN</span><h2>{selectedDesign.kind === "template" ? cardTemplates.find(item => item.id === selectedDesign.id)?.title : cards.find(item => item.id === selectedDesign.id)?.name}</h2><p>{selectedDesign.kind === "template" ? "이 템플릿을 기반으로 새 명함을 만듭니다. 템플릿 원본은 그대로 유지됩니다." : "선택한 카드를 복사해 새 명함으로 편집합니다. 원본 카드의 내용은 변경되지 않습니다."}</p></div>
+              <div className="selection-actions"><button className="button-secondary" onClick={() => setSelectedDesign(null)}>선택 취소</button><button className="button-primary" onClick={() => { if (selectedDesign.kind === "template") { const template = cardTemplates.find(item => item.id === selectedDesign.id); if (template) useTemplate(template); } else { const card = cards.find(item => item.id === selectedDesign.id); if (card) duplicateSavedCard(card); } }}><Sparkles size={16} /> 이 디자인으로 만들기 <ArrowRight size={16} /></button></div>
+            </section>
             </section>
           </>
         ) : (
