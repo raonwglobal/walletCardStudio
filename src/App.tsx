@@ -195,7 +195,7 @@ function CardStudioApp() {
                 <div className="eyebrow"><span className="eyebrow-dot" /> YOUR IDENTITY, REIMAGINED</div>
                 <h1>좋은 연결은<br /><span>좋은 인상</span>에서 시작됩니다.</h1>
                 <p>나를 가장 잘 보여주는 디지털 명함을 만들고, 언제 어디서든 간편하게 공유하세요.</p>
-                <div className="hero-actions"><button className="button-primary" onClick={startNew}><Plus size={17} /> 명함 만들기 <ArrowRight size={16} /></button><button className="button-secondary" onClick={() => document.getElementById("card-gallery")?.scrollIntoView({ behavior: "smooth" })}><Eye size={16} /> 샘플 둘러보기</button></div>
+                <div className="hero-actions"><button className="button-primary" onClick={() => document.getElementById("design-templates")?.scrollIntoView({ behavior: "smooth" })}><LayoutTemplate size={17} /> 템플릿 선택하기 <ArrowRight size={16} /></button><button className="button-secondary" onClick={() => document.getElementById("card-gallery")?.scrollIntoView({ behavior: "smooth" })}><Eye size={16} /> 샘플 둘러보기</button></div>
                 <div className="hero-proof"><span><Check size={14} /> 설치 없이 시작</span><span><Check size={14} /> QR 코드 생성</span><span><Check size={14} /> 내 기기에 저장</span></div>
               </div>
               <div className="hero-art" aria-label="디지털 명함 미리보기">
@@ -230,7 +230,6 @@ function CardStudioApp() {
             {selectedDesign && <section className="design-selection" aria-live="polite">
               <div className="selection-copy"><span className="eyebrow muted">YOUR SELECTED DESIGN</span><h2>{selectedDesign.kind === "template" ? cardTemplates.find(item => item.id === selectedDesign.id)?.title : cards.find(item => item.id === selectedDesign.id)?.name}</h2><p>{selectedDesign.kind === "template" ? "이 템플릿을 기반으로 새 명함을 만듭니다. 템플릿 원본은 그대로 유지됩니다." : "선택한 카드를 복사해 새 명함으로 편집합니다. 원본 카드의 내용은 변경되지 않습니다."}</p></div>
               <div className="selection-actions"><button className="button-secondary" onClick={() => setSelectedDesign(null)}>선택 취소</button><button className="button-primary" onClick={() => { if (selectedDesign.kind === "template") { const template = cardTemplates.find(item => item.id === selectedDesign.id); if (template) useTemplate(template); } else { const card = cards.find(item => item.id === selectedDesign.id); if (card) duplicateSavedCard(card); } }}><Sparkles size={16} /> 이 디자인으로 만들기 <ArrowRight size={16} /></button></div>
-            </section>
             </section>
           </>
         ) : (
