@@ -9,6 +9,7 @@ import { createCard, loadCards, saveCards, toVCard, validateCard } from "./lib/c
 import { createQrDataUrl } from "./lib/qr";
 import SharePanel from "./components/SharePanel";
 import PublicSharePage from "./components/PublicSharePage";
+import CardDesignShowcase from "./components/CardDesignShowcase";
 import { cardTemplates, type CardTemplate } from "./lib/templates";
 import "./plaza.css";
 
@@ -60,6 +61,8 @@ function CardStudioApp() {
   const [selectedDesign, setSelectedDesign] = useState<SelectedDesign | null>(null);
 
   const activeCard = cards.find(card => card.id === activeId) ?? cards[0];
+  const selectedTemplate = selectedDesign?.kind === "template" ? cardTemplates.find(item => item.id === selectedDesign.id) : undefined;
+  const selectedSavedCard = selectedDesign?.kind === "saved" ? cards.find(item => item.id === selectedDesign.id) : undefined;
   const filteredCards = useMemo(() => cards.filter(card => {
     const matchesFilter = filter === "all" || card.category === filter;
     const text = `${card.name} ${card.role} ${card.company}`.toLowerCase();
@@ -224,12 +227,13 @@ function CardStudioApp() {
             <section className="gallery-section template-section" id="design-templates">
               <div className="section-heading"><div><div className="eyebrow muted">START WITH A DESIGN</div><h2>디자인 템플릿 <span className="count-badge">{cardTemplates.length.toString().padStart(2, "0")}</span></h2><p>마음에 드는 디자인을 먼저 선택하고, 스튜디오에서 내 정보로 바꾸세요.</p></div></div>
               <div className="gallery-grid template-grid">
-                {cardTemplates.map(template => <div className={`gallery-item ${selectedDesign?.kind === "template" && selectedDesign.id === template.id ? "design-selected" : ""}`} key={template.id}><button className="preview-button" onClick={() => setSelectedDesign({ kind: "template", id: template.id })} aria-label={`${template.title} 템플릿 미리보기 선택`} aria-pressed={selectedDesign?.kind === "template" && selectedDesign.id === template.id}><CardPreview card={template.card} compact /></button><div className="gallery-item-meta"><div><strong>{template.title}</strong><span>{template.description}</span></div><button className="icon-button" aria-label={`${template.title} 템플릿 선택`} onClick={() => setSelectedDesign({ kind: "template", id: template.id })}><Eye size={17} /></button></div><div className="template-label"><LayoutTemplate size={13} /> 기본 템플릿</div></div>)}
+                {cardTemplates.map(template => <div className={`gallery-item ${selectedDesign?.kind === "template" && selectedDesign.id === template.id ? "design-selected" : ""}`} key={template.id}><button className="preview-button" onClick={() => setSelectedDesign({ kind: "template", id: template.id })} aria-label={`${template.title} 템플릿 미리보기 선택`} aria-pressed={selectedDesign?.kind === "template" && selectedDesign.id === template.id}><CardDesignShowcase card={template.card} templateId={template.id} title={template.title} compact /></button><div className="gallery-item-meta"><div><strong>{template.title}</strong><span>{template.description}</span></div><button className="icon-button" aria-label={`${template.title} 템플릿 선택`} onClick={() => setSelectedDesign({ kind: "template", id: template.id })}><Eye size={17} /></button></div><div className="template-label"><LayoutTemplate size={13} /> 기본 템플릿</div></div>)}
               </div>
             </section>
             {selectedDesign && <section className="design-selection" aria-live="polite">
-              <div className="selection-copy"><span className="eyebrow muted">YOUR SELECTED DESIGN</span><h2>{selectedDesign.kind === "template" ? cardTemplates.find(item => item.id === selectedDesign.id)?.title : cards.find(item => item.id === selectedDesign.id)?.name}</h2><p>{selectedDesign.kind === "template" ? "이 템플릿을 기반으로 새 명함을 만듭니다. 템플릿 원본은 그대로 유지됩니다." : "선택한 카드를 복사해 새 명함으로 편집합니다. 원본 카드의 내용은 변경되지 않습니다."}</p></div>
-              <div className="selection-actions"><button className="button-secondary" onClick={() => setSelectedDesign(null)}>선택 취소</button><button className="button-primary" onClick={() => { if (selectedDesign.kind === "template") { const template = cardTemplates.find(item => item.id === selectedDesign.id); if (template) useTemplate(template); } else { const card = cards.find(item => item.id === selectedDesign.id); if (card) duplicateSavedCard(card); } }}><Sparkles size={16} /> 이 디자인으로 만들기 <ArrowRight size={16} /></button></div>
+              <div className="selection-detail-preview">{selectedTemplate ? <CardDesignShowcase card={selectedTemplate.card} templateId={selectedTemplate.id} title={selectedTemplate.title} /> : selectedSavedCard ? <CardDesignShowcase card={selectedSavedCard} title={selectedSavedCard.name} /> : null}</div>
+              <div className="selection-detail-footer"><div className="selection-copy"><span className="eyebrow muted">YOUR SELECTED DESIGN</span><h2>{selectedTemplate?.title ?? selectedSavedCard?.name}</h2><p>{selectedTemplate ? "앞면과 뒷면을 확인한 뒤 이 템플릿을 기반으로 새 명함을 만듭니다. 템플릿 원본은 그대로 유지됩니다." : "앞면과 뒷면을 확인할 수 있습니다. 선택한 카드는 복사해 새 명함으로 편집하며 원본은 변경되지 않습니다."}</p></div>
+              <div className="selection-actions"><button className="button-secondary" onClick={() => setSelectedDesign(null)}>선택 취소</button><button className="button-primary" onClick={() => { if (selectedTemplate) useTemplate(selectedTemplate); else if (selectedSavedCard) duplicateSavedCard(selectedSavedCard); }}><Sparkles size={16} /> 이 디자인으로 만들기 <ArrowRight size={16} /></button></div></div>
             </section>}
           </>
         ) : (
