@@ -41,3 +41,10 @@
  .showcase-modal-content .showcase-toolbar{gap:12px}
 }
 @media(prefers-reduced-motion:reduce){.showcase-expand-trigger,.showcase-modal-backdrop,.showcase-modal{transition:none;animation:none}}
+
+/* Make the entire sample card an accessible click target; keep the affordance in its corner. */
+.showcase-expand-trigger{inset:0;width:100%;height:100%;display:block;padding:0;border:0;border-radius:inherit;background:transparent;opacity:1;transform:none}
+.showcase-expand-trigger svg,.showcase-expand-trigger span{position:absolute;right:8px;bottom:8px;display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:7px 9px;border:1px solid #ffffff40;border-radius:999px;background:#17141dd9;color:#fff;font-size:10px;line-height:1}
+.showcase-expand-trigger svg{right:72px;width:28px;height:28px;padding:7px}
+.showcase-compact:hover .showcase-expand-trigger svg,.showcase-compact:hover .showcase-expand-trigger span,.showcase-expand-trigger:focus-visible svg,.showcase-expand-trigger:focus-visible span{background:#3b3153;border-color:#c5b3ff}
+@media(max-width:640px){.showcase-expand-trigger svg,.showcase-expand-trigger span{opacity:1}}
