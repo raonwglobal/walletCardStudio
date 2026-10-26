@@ -20,7 +20,7 @@ const photoByTemplate: Record<string, string> = {
 export default function CardDesignShowcase({ card, templateId = "", title, compact = false }: Props) {
   const [side, setSide] = useState<"front" | "back">("front");
   const photo = photoByTemplate[templateId];
-  const initials = card.name.trim().split(/\\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase() || "YO";
+  const initials = card.name.trim().split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase() || "YO";
   const displayTitle = title || card.name || "디자인 미리보기";
 
   return (
@@ -45,7 +45,7 @@ export default function CardDesignShowcase({ card, templateId = "", title, compa
             <div className="showcase-contact-list">
               {card.email && <div><Mail size={compact ? 11 : 15} /><span>{card.email}</span></div>}
               {card.phone && <div><Phone size={compact ? 11 : 15} /><span>{card.phone}</span></div>}
-              {card.website && <div><Globe2 size={compact ? 11 : 15} /><span>{card.website.replace(/^https?:\\/\\//, "")}</span></div>}
+              {card.website && <div><Globe2 size={compact ? 11 : 15} /><span>{card.website.replace(/^https?:\/\//, "")}</span></div>}
               {card.location && <div><MapPin size={compact ? 11 : 15} /><span>{card.location}</span></div>}
             </div>
             {!compact && card.bio && <p className="showcase-back-bio">{card.bio}</p>}
