@@ -7,8 +7,9 @@ select ok(
   'RLS is enabled on gallery publications'
 );
 select ok(
-  has_table_privilege('anon', 'public.gallery_publications', 'SELECT'),
-  'anonymous users can query public gallery rows'
+  has_column_privilege('anon', 'public.gallery_publications', 'title', 'SELECT')
+    and has_column_privilege('anon', 'public.gallery_publications', 'card_data', 'SELECT'),
+  'anonymous users can read approved public gallery fields'
 );
 select ok(
   not has_column_privilege('anon', 'public.gallery_publications', 'owner_id', 'SELECT'),
