@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { ArrowLeftRight, Globe2, Mail, MapPin, Phone, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
+import { ArrowLeftRight, Globe2, Mail, MapPin, Maximize2, Phone, Sparkles, X } from "lucide-react";
 import type { CardRecord } from "../lib/cards";
 import "./card-showcase.css";
 
@@ -19,6 +20,21 @@ const photoByTemplate: Record<string, string> = {
 
 export default function CardDesignShowcase({ card, templateId = "", title, compact = false }: Props) {
   const [side, setSide] = useState<"front" | "back">("front");
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  useEffect(() => {
+    if (!previewOpen) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setPreviewOpen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [previewOpen]);
   const photo = photoByTemplate[templateId];
   const initials = card.name.trim().split(/\s+/).map(part => part[0]).join("").slice(0, 2).toUpperCase() || "YO";
   const displayTitle = title || card.name || "디자인 미리보기";
@@ -53,7 +69,55 @@ export default function CardDesignShowcase({ card, templateId = "", title, compa
           <div className="showcase-footer"><span>{card.company || "WALLET / STUDIO"}</span><span>02 / 02</span></div>
         </>}
       </article>
+      {compact && (
+        <button
+          type="button"
+          className="showcase-expand-trigger"
+          onClick={() => { setSide("front"); setPreviewOpen(true); }}
+          aria-label={`${displayTitle} 전체 화면 미리보기 열기`}
+          title="전체 화면으로 보기"
+        >
+          <Maximize2 size={14} />
+          <span>크게 보기</span>
+        </button>
+      )}
       {!compact && <p className="showcase-hint">앞면과 뒷면을 전환해 디자인과 연락처 배치를 확인하세요. 사진이 있는 템플릿은 앞면에 이미지가 포함됩니다.</p>}
+      {compact && previewOpen && createPortal((
+        <div
+          className="showcase-modal-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setPreviewOpen(false);
+          }}
+        >
+          <section
+            className="showcase-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${displayTitle} 전체 화면 미리보기`}
+          >
+            <div className="showcase-modal-header">
+              <div>
+                <span className="eyebrow muted">FULL SCREEN PREVIEW</span>
+                <strong>{displayTitle}</strong>
+              </div>
+              <button
+                type="button"
+                className="showcase-modal-close"
+                onClick={() => setPreviewOpen(false)}
+                aria-label="미리보기 닫기"
+                autoFocus
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="showcase-modal-content">
+              <CardDesignShowcase card={card} templateId={templateId} title={displayTitle} />
+            </div>
+            <p className="showcase-modal-footnote">앞면과 뒷면을 전환해 자세히 확인할 수 있습니다. 닫으려면 Esc 키를 누르거나 바깥 영역을 클릭하세요.</p>
+          </section>
+        </div>
+      ), document.body)}
     </div>
   );
 }
