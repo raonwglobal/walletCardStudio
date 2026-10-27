@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { ArrowLeftRight, Globe2, Mail, MapPin, Maximize2, Phone, Sparkles, X } from "lucide-react";
 import type { CardRecord } from "../lib/cards";
 import "./card-showcase.css";
@@ -81,7 +82,7 @@ export default function CardDesignShowcase({ card, templateId = "", title, compa
         </button>
       )}
       {!compact && <p className="showcase-hint">앞면과 뒷면을 전환해 디자인과 연락처 배치를 확인하세요. 사진이 있는 템플릿은 앞면에 이미지가 포함됩니다.</p>}
-      {compact && previewOpen && (
+      {compact && previewOpen && createPortal((
         <div
           className="showcase-modal-backdrop"
           role="presentation"
@@ -116,7 +117,7 @@ export default function CardDesignShowcase({ card, templateId = "", title, compa
             <p className="showcase-modal-footnote">앞면과 뒷면을 전환해 자세히 확인할 수 있습니다. 닫으려면 Esc 키를 누르거나 바깥 영역을 클릭하세요.</p>
           </section>
         </div>
-      )}
+      ), document.body)}
     </div>
   );
 }
